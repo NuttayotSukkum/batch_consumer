@@ -1,0 +1,23 @@
+app:
+  name: cunsumer-template
+  port: 8080
+  version: 1.0
+  env: dev
+
+log:
+  env: local
+  level: "debug"
+
+secrets:
+  cloud-sql-gormhost: 127.0.0.1
+  cloud-sql-port: "3306"
+  cloud-sql-username: "root"
+  cloud-sql-password: "0872772514Za"
+  cloud-sql-dbname: "acn_database"
+  aws:
+    access-key: "AKIAV4OJKPZF6NBAVROZ"
+    secret-key: "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"
+    S3:
+      bucket-name: myfiler
+      bucket-arn: arn:aws:s3:::myfiler
+      region: "ap-southeast-1"

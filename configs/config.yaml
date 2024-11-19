@@ -15,9 +15,9 @@ secrets:
   cloud-sql-password: "0872772514Za"
   cloud-sql-dbname: "acn_database"
   aws:
-    access-key: "AKIAV4OJKPZF6NBAVROZ"
-    secret-key: "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"
+    access-key:
+    secret-key:
     S3:
-      bucket-name: myfiler
-      bucket-arn: arn:aws:s3:::myfiler
+      bucket-name:
+      bucket-arn:
       region: "ap-southeast-1"

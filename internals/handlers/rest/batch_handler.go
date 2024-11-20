@@ -7,6 +7,7 @@ import (
 	"github.com/NuttayotSukkum/batch_consumer/internals/models/responses"
 	"github.com/NuttayotSukkum/batch_consumer/internals/pkg/constants"
 	"github.com/NuttayotSukkum/batch_consumer/internals/services"
+	processor2 "github.com/NuttayotSukkum/batch_consumer/internals/services/processor"
 	"github.com/labstack/echo/v4"
 	logger "github.com/labstack/gommon/log"
 	"net/http"
@@ -33,5 +34,11 @@ func (h *BatchHandler) Initial(c echo.Context) error {
 	response.BatchHeaderId = batchId
 	logger.Warnf("Batch date:%v", batchDate)
 	response.BatchDate = batchDate.Format(constants.DATE_TIME_FORMATTER)
+	product, err := processor2.ReadFileInDirectory(constants.DirPath, 2)
+	if err != nil {
+		logger.Errorf("Error read file :%s", err)
+
+	}
+	logger.Infof("Product:%+v", product)
 	return c.JSON(http.StatusOK, response)
 }

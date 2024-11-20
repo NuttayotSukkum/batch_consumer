@@ -17,8 +17,8 @@ func NewBaseError(code int, desc string) *BaseError {
 }
 
 var GenericError = BaseError{
-	Code:    5000,
-	Message: "Generic error",
+	Code:    5001,
+	Message: "Not found Data in S3 bucket",
 }
 
 var GenericSuccess = BaseError{

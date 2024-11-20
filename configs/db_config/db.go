@@ -14,7 +14,6 @@ import (
 
 func ACNDBConnector(ctx context.Context, host, port, username, password, dbName string) *gorm.DB {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", username, password, host, port, dbName)
-	logger.Infof("%v: database connect:%+v", ctx, dsn)
 	dial := mysql.Open(dsn)
 	db, err := gorm.Open(dial, &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
@@ -25,7 +24,7 @@ func ACNDBConnector(ctx context.Context, host, port, username, password, dbName 
 	if err != nil {
 		log.Panic(ctx, err.Error())
 	}
-	if err := db.AutoMigrate(&dao.BatchHeader{}); err != nil {
+	if err := db.AutoMigrate(&dao.BatchHeader{}, dao.Product{}); err != nil {
 		logger.Errorf("unable to migrate model: %s", err)
 	}
 	sqlDb, err := db.DB()

@@ -1,6 +1,7 @@
-package processor
+package worker
 
 import (
+	"context"
 	"encoding/csv"
 	"github.com/NuttayotSukkum/batch_consumer/internals/models/dao"
 	"github.com/NuttayotSukkum/batch_consumer/internals/pkg/constants"
@@ -13,9 +14,22 @@ import (
 	"time"
 )
 
-func ReadFileInDirectory(directory string, chunkSize int) ([][]dao.Product, error) {
+type ServiceReader struct {
+	Directory string
+	ChunkSize int
+}
+
+func NewServiceReader(directory string, chunkSize int) *ServiceReader {
+	return &ServiceReader{
+		Directory: directory,
+		ChunkSize: chunkSize,
+	}
+}
+
+func (r *ServiceReader) ReadFileInDirectory(ctx context.Context) ([][]dao.Product, error) {
+	logger.Warnf("Start execute Reader . . .")
 	var allChunks [][]dao.Product
-	files, err := filepath.Glob(filepath.Join(directory, constants.CSV_FILE))
+	files, err := filepath.Glob(filepath.Join(r.Directory, constants.CSV_FILE))
 	if err != nil {
 		return nil, err
 	}
@@ -26,18 +40,18 @@ func ReadFileInDirectory(directory string, chunkSize int) ([][]dao.Product, erro
 		if !regex.MatchString(fileName) {
 			continue
 		}
-		products, err := readCSV(file, fileName)
+		products, err := r.readCSV(file, fileName)
 		if err != nil {
 			return nil, err
 		}
 
-		chunks := chunkProduct(*products, chunkSize)
+		chunks := r.chunkProduct(*products, r.ChunkSize)
 		allChunks = append(allChunks, chunks...)
 	}
 	return allChunks, nil
 }
 
-func readCSV(filePath, fileName string) (*[]dao.Product, error) {
+func (r *ServiceReader) readCSV(filePath, fileName string) (*[]dao.Product, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
@@ -74,7 +88,7 @@ func readCSV(filePath, fileName string) (*[]dao.Product, error) {
 		if len(createdStr) == 14 {
 			created, err = time.ParseInLocation(constants.DATE_FORMATTER, createdStr, constants.TIME_LOCAL)
 			if err != nil {
-				logger.Warnf("Invalid date format: %s error:%s", createdStr, err)
+				logger.Warnf("Invalid date format: %s dto:%s", createdStr, err)
 				continue
 			}
 		} else {
@@ -89,7 +103,7 @@ func readCSV(filePath, fileName string) (*[]dao.Product, error) {
 	return &products, nil
 }
 
-func chunkProduct(products []dao.Product, chunkSize int) [][]dao.Product {
+func (r *ServiceReader) chunkProduct(products []dao.Product, chunkSize int) [][]dao.Product {
 	var chunks [][]dao.Product
 	for i := 0; i < len(products); i += chunkSize {
 		end := i + chunkSize

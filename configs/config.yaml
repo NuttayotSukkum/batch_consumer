@@ -3,10 +3,23 @@ app:
   port: 8080
   version: 1.0
   env: dev
+  chunk-size: 2
+  chunk-size-reader: 3
 
 log:
   env: local
   level: "debug"
+
+kafka_producer:
+  sasl:
+    enable: true
+    mechanism: "PLAIN"
+  tls:
+    enable: false
+  producer:
+    partitioner: "roundrobin"
+  topics:
+    topic: "product"
 
 secrets:
   cloud-sql-gormhost: 127.0.0.1

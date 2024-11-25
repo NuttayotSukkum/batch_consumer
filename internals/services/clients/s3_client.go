@@ -71,7 +71,7 @@ func (client *S3Client) downloadFileFromS3(ctx context.Context, dir string, item
 		Key:    aws.String(*item.Key),
 	})
 	if err != nil {
-		logger.Errorf("error getting file from S3: %w", err)
+		logger.Errorf("dto getting file from S3: %w", err)
 		return err
 	}
 	defer obj.Body.Close()
@@ -79,13 +79,13 @@ func (client *S3Client) downloadFileFromS3(ctx context.Context, dir string, item
 	outFilePath := filepath.Join(dir, filepath.Base(*item.Key))
 	outFile, err := os.Create(outFilePath)
 	if err != nil {
-		logger.Errorf("error creating file %s: %w", outFilePath, err)
+		logger.Errorf("dto creating file %s: %w", outFilePath, err)
 		return err
 	}
 	defer outFile.Close()
 
 	if _, err := io.Copy(outFile, obj.Body); err != nil {
-		logger.Errorf("error writing file content: %w", err)
+		logger.Errorf("dto writing file content: %w", err)
 		return err
 	}
 	logger.Infof("Successfully downloaded file: %s", outFilePath)

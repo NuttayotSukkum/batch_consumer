@@ -3,14 +3,17 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/IBM/sarama"
 	"github.com/NuttayotSukkum/batch_consumer/configs"
 	"github.com/NuttayotSukkum/batch_consumer/configs/db_config"
 	"github.com/NuttayotSukkum/batch_consumer/internals/handlers/rest"
 	"github.com/NuttayotSukkum/batch_consumer/internals/pkg/constants"
 	"github.com/NuttayotSukkum/batch_consumer/internals/pkg/utils"
 	repo "github.com/NuttayotSukkum/batch_consumer/internals/repositories/db"
+	repoKafka "github.com/NuttayotSukkum/batch_consumer/internals/repositories/kafka"
 	"github.com/NuttayotSukkum/batch_consumer/internals/services/clients"
 	"github.com/NuttayotSukkum/batch_consumer/internals/services/preprocess"
+	"github.com/NuttayotSukkum/batch_consumer/internals/services/worker"
 	"github.com/labstack/echo/v4"
 	logger "github.com/labstack/gommon/log"
 	"gorm.io/gorm"
@@ -21,7 +24,6 @@ import (
 func main() {
 	ctx := context.Background()
 	cfg := configs.InitConfig(ctx)
-	logger.Errorf("Config: %+v", cfg)
 	location, err := time.LoadLocation("Asia/Bangkok")
 	if err != nil {
 		log.Fatalf("Failed to load timezone Asia/Bangkok: %v", err)
@@ -32,11 +34,24 @@ func main() {
 	if err != nil {
 		logger.Errorf("%v Failed to get sql.DB from gorm.DB: %s", ctx, err)
 	}
-
 	batchHeaderDBRepo := repo.NewBatchHeaderRepository(dbConnection)
 	S3Client, _ := clients.NewS3Client(ctx, cfg.Secrets.AWSSecret.S3.Region, cfg.Secrets.AWSSecret.S3.S3Bucket, cfg.Secrets.AWSSecret.AccessKey, cfg.Secrets.AWSSecret.SecretKey)
 	preProcessSvc := preprocess.NewPreProcessService(batchHeaderDBRepo, *S3Client)
-	e := rest.InitRouter(ctx, &preProcessSvc)
+	readerSvc := worker.NewServiceReader(constants.DirPath, cfg.App.ChunkSizeReader)
+
+	kafkaBroker := []string{"localhost:9092"}
+	cfgKafka := sarama.NewConfig()
+	cfgKafka.Producer.Return.Successes = true
+	producer, err := sarama.NewSyncProducer(kafkaBroker, cfgKafka)
+	if err != nil {
+		log.Fatalf("Error creating Kafka producer: %s", err)
+	}
+	defer producer.Close()
+
+	kafkaProducerRepo := repoKafka.NewServiceProducer(producer)
+	senderSvc := worker.NewServiceSender(kafkaProducerRepo)
+	workerSvc := worker.NewServiceWorker(*readerSvc, *senderSvc, cfg.KafkaProducer.Topics.Topic)
+	e := rest.InitRouter(ctx, &preProcessSvc, workerSvc, batchHeaderDBRepo)
 	defer func() {
 		if err := sqlDb.Close(); err != nil {
 			log.Fatal(ctx, "Failed to close sql DB:%s", err)

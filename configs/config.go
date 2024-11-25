@@ -10,16 +10,19 @@ import (
 )
 
 type Config struct {
-	App     AppConfig `mapstructure:"app"`
-	Log     Log       `mapstructure:"log"`
-	Secrets Secrets   `mapstructure:"secrets"`
+	App           AppConfig     `mapstructure:"app"`
+	Log           Log           `mapstructure:"log"`
+	Secrets       Secrets       `mapstructure:"secrets"`
+	KafkaProducer KafkaProducer `mapstructure:"kafka_producer"`
 }
 
 type AppConfig struct {
-	AppName string `mapstructure:"name"`
-	Port    string `mapstructure:"port"`
-	Version string `mapstructure:"version"`
-	env     string `mapstructure:"env"`
+	AppName         string `mapstructure:"name"`
+	Port            string `mapstructure:"port"`
+	Version         string `mapstructure:"version"`
+	env             string `mapstructure:"env"`
+	ChunkSize       int    `mapstructure:"chunk-size"`
+	ChunkSizeReader int    `mapstructure:"chunk-size-reader"`
 }
 
 type Log struct {
@@ -46,6 +49,31 @@ type S3 struct {
 	S3Bucket  string `mapstructure:"bucket-name"`
 	BucketArn string `mapstructure:"bucket-arn"`
 	Region    string `mapstructure:"region"`
+}
+
+type KafkaProducer struct {
+	Version    string              `mapstructure:"version"`
+	KafkaSASAL KafkaSASAL          `mapstructure:"sasl"`
+	KafkaTLS   KafkaTLS            `mapstructure:"tls"`
+	Producer   ProducerConfig      `mapstructure:"producer"`
+	Topics     KafkaProducerTopics `mapstructure:"topics"`
+}
+
+type KafkaSASAL struct {
+	Enable    bool   `mapstructure:"enable"`
+	Mechanism string `mapstructure:"mechanism"`
+}
+
+type KafkaTLS struct {
+	Enable bool `mapstructure:"enable"`
+}
+
+type ProducerConfig struct {
+	Partitioner string `mapstructure:"partitioner"`
+}
+
+type KafkaProducerTopics struct {
+	Topic string `mapstructure:"topic"`
 }
 
 var (
